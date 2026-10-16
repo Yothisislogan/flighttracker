@@ -1,11 +1,22 @@
 import {build} from 'vite';
-import {readFile, writeFile, mkdir} from 'node:fs/promises';
+import {readFile, writeFile, mkdir, access} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {dirname, resolve} from 'node:path';
 import {createRequire} from 'node:module';
+import {execFileSync} from 'node:child_process';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(import.meta.url);
+try { await access(resolve(root, 'local-map-cache/manifest.json')); }
+catch { execFileSync(process.platform === 'win32' ? 'python' : 'python3', [resolve(root, 'scripts/cache-local-map.py')], {stdio:'inherit'}); }
+const manifest = JSON.parse(await readFile(resolve(root, 'local-map-cache/manifest.json'), 'utf8'));
+const bundledTiles = {};
+for (const [source,z,x,y] of manifest) {
+  const bytes = await readFile(resolve(root, `local-map-cache/${source}-${z}-${x}-${y}.jpg`));
+  if (bytes[0] !== 255 || bytes[1] !== 216) throw new Error('Invalid bundled map image');
+  bundledTiles[`${source}/${z}/${x}/${y}`] = 'data:image/jpeg;base64,' + bytes.toString('base64');
+}
+if (Object.keys(bundledTiles).filter(k => k.startsWith('earth/2/')).length !== 16) throw new Error('Bundled global map is incomplete');
 // Isolated from Sites/Vinext configuration: this build has no server or login.
 const result = await build({
   configFile: false, root, publicDir: false, envFile: false,
@@ -36,12 +47,13 @@ for (const [pkg, filename] of [['react','LICENSE'], ['react-dom','LICENSE'], ['m
 const icon = await readFile(resolve(root, 'public/favicon.svg'));
 const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="referrer" content="no-referrer"><title>Skyline — Local Flight Tracker</title>
+<meta name="referrer" content="no-referrer"><meta name="skyline-version" content="local-3"><title>Skyline Local 3 — Flight Tracker</title>
 <link rel="icon" href="data:image/svg+xml;base64,${icon.toString('base64')}">
 <style>${css}</style></head><body>
 <div id="root"><p style="color:white;padding:32px;font:16px system-ui">Opening Skyline… Download this file and open it in Chrome if your preview does not run apps.</p></div>
 <noscript>Skyline needs JavaScript enabled in your browser.</noscript>
 <script>window.addEventListener('error',function(event){if(!event.message)return;var panel=document.getElementById('startup-error');if(!panel){panel=document.createElement('div');panel.id='startup-error';panel.style.cssText='position:fixed;bottom:16px;left:16px;right:16px;z-index:9999;background:#fff3e4;color:#542c10;border:1px solid #e1bb89;border-radius:10px;padding:18px;font:14px system-ui';document.body.appendChild(panel);}panel.textContent='Skyline could not finish starting: '+event.message+'. Please copy this message so the error can be fixed.';});</script>
+<script>window.SKYLINE_MAP_TILES=${JSON.stringify(bundledTiles)};</script>
 <script>${script}</script>
 <template id="software-licenses"><pre>${escape(notices.join('\n\n'))}</pre></template>
 </body></html>`;

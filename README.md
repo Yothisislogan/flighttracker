@@ -6,8 +6,11 @@ A map-first personal flight tracker with real satellite/aerial imagery, 3D terra
 
 The [local edition](local/README.md) packages the app as one downloadable
 `Skyline-Local.html` file that opens directly in Chrome. No account, installation,
-or local server is required. Maps and live data still need internet access and
-provider permission. Build it with `pnpm build:local`; the generated file is in
+or local server is required to display the bundled map. Automatic live tracking
+uses the included local launcher (Python 3.10+) because the available public
+feed does not consistently permit direct browser requests. This runs only on
+your computer, with no online hosting. Live data still needs internet access
+and provider permission. Build it with `pnpm build:local`; the generated file is in
 `local-dist/`. This separate build does not deploy or change the hosted Site.
 
 ## What works now

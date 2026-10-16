@@ -58,3 +58,5 @@ next-env.d.ts
 *.tsbuildinfo
 
 /local-dist/
+/local-map-cache/
+__pycache__/

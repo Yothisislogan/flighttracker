@@ -1,0 +1,38 @@
+SKYLINE LOCAL 3
+
+1. Extract the whole ZIP into a folder.
+2. Windows: double-click Start-Skyline.bat.
+   Mac: run Start-Skyline.command (or python3 skyline.py in Terminal).
+   Linux: run python3 skyline.py in this folder.
+3. Skyline opens in your browser. Keep the launcher window open.
+
+Requires Python 3.10 or newer and internet for current flights. No account,
+API key, paid service, Node, or online hosting is needed. If Python is missing,
+install it from https://www.python.org/downloads/ . No extra Python packages.
+On Chromebook this requires the Linux development environment and Python;
+double-clicking the HTML alone cannot guarantee live flight access.
+
+The app runs only on 127.0.0.1 (your own computer). Closing the launcher stops
+it. It is not published online. The port is chosen automatically.
+
+MAP: The HTML includes NASA global imagery and a regional aerial view around
+Philadelphia / New York / Washington. Online imagery adds detail as you zoom
+or travel. Bundled coverage is limited and blurs when zoomed in. Map photography
+is historical. No aircraft are bundled, invented, or simulated.
+
+FLIGHTS: The local launcher requests the documented ADSB.lol public API,
+once a minute while the page is visible. It caches results, paces searches,
+and honors rate limits. The feed can still have outages or deny access.
+Route, gate and airline arrival estimates are not connected.
+
+Opening Skyline-Local.html directly shows the bundled map, but live data
+requires the provider to permit browser requests. Use the launcher for live
+tracking; do not disable browser security.
+
+Imagery: NASA GIBS; USDA / USGS The National Map.
+We acknowledge the use of imagery provided by services from NASA's Global
+Imagery Browse Services (GIBS), part of NASA's Earth Science Data and
+Information System (ESDIS).
+Aircraft data: ADSB.lol, https://www.adsb.lol/docs/open-data/api/ (ODbL 1.0).
+Source: https://github.com/Yothisislogan/flighttracker (MPL 2.0).
+For exploration; not navigation.

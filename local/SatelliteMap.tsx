@@ -7,6 +7,7 @@ import {project, unproject, screenPoint, visibleTiles} from './projection.mjs';
 type View = {lon:number;lat:number;zoom:number};
 const earthURL = (z:number,x:number,y:number) => `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/GoogleMapsCompatible_Level8/${z}/${y}/${x}.jpeg`;
 const aerialURL = (z:number,x:number,y:number) => `https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/${z}/${y}/${x}`;
+const bundled:Record<string,string> = (window as Window & {SKYLINE_MAP_TILES?:Record<string,string>}).SKYLINE_MAP_TILES || {};
 
 // Ordinary image tiles: no WebGL, canvas texture reads, web workers or CDN code.
 export default function SatelliteMap(props:Props) {
@@ -32,7 +33,7 @@ export default function SatelliteMap(props:Props) {
     const [,north]=unproject(cx,cy-size.height/2,view.zoom);
     const radius=Math.min(250,Math.max(30,Math.round(Math.max(Math.abs(north-view.lat)*60,size.width/(256*2**view.zoom)*21600*Math.cos(view.lat*Math.PI/180)/2))));
     latest.current.onArea({lat:Math.max(-85,Math.min(85,view.lat)),lon:view.lon,radius,label:'Map area'});
-    const images=Array.from(container.current?.querySelectorAll<HTMLImageElement>('.local-tiles img')||[]);
+    const images=Array.from(container.current?.querySelectorAll<HTMLImageElement>('.online-tile')||[]);
     setCounts({loaded:images.filter(i=>i.complete&&i.naturalWidth>0).length,failed:images.filter(i=>i.complete&&!i.naturalWidth).length});setSlow(false);
     const timer=setTimeout(()=>setSlow(true),12000);return()=>clearTimeout(timer);
   },[view,size,mode]);
@@ -47,6 +48,8 @@ export default function SatelliteMap(props:Props) {
     ...visibleTiles(view,size.width,size.height,8).map(t=>({...t,source:'earth',url:earthURL(t.z,t.x,t.y)})),
     ...(aerial?visibleTiles(view,size.width,size.height,16).map(t=>({...t,source:'aerial',url:aerialURL(t.z,t.x,t.y)})):[]),
   ];
+  const baseTiles = visibleTiles(view,size.width,size.height,2).map(t=>({...t,source:'earth',url:bundled[`earth/${t.z}/${t.x}/${t.y}`]}));
+  const regionalTiles = aerial&&view.zoom>=7 ? visibleTiles(view,size.width,size.height,7).map(t=>({...t,source:'aerial',url:bundled[`aerial/${t.z}/${t.x}/${t.y}`]})).filter(t=>t.url) : [];
   const planes=props.selected&&!props.aircraft.some(a=>a.id===props.selected?.id)?[...props.aircraft,props.selected]:props.aircraft;
   const zoom=(by:number)=>{latest.current.onStopFollow();setView(v=>({...v,zoom:Math.max(2,Math.min(16,v.zoom+by))}));};
   return <div className="map-shell local-map">
@@ -55,7 +58,7 @@ export default function SatelliteMap(props:Props) {
       onPointerDown={e=>{if(e.button!==0)return;drag.current={id:e.pointerId,x:e.clientX,y:e.clientY,view:viewRef.current};e.currentTarget.setPointerCapture(e.pointerId);latest.current.onStopFollow();}}
       onPointerMove={e=>{const d=drag.current;if(!d||e.pointerId!==d.id)return;const [x,y]=project(d.view.lon,d.view.lat,d.view.zoom);const [lon,lat]=unproject(x-(e.clientX-d.x),y-(e.clientY-d.y),d.view.zoom);setView({...d.view,lon,lat});}}
       onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}}>
-      <div className="local-tiles" aria-hidden="true">{size.width>0&&tiles.map(t=><img key={`${t.source}/${t.key}`} src={t.url} alt="" draggable={false} referrerPolicy="no-referrer"
+      <div className="local-tiles" aria-hidden="true">{size.width>0&&[...baseTiles,...regionalTiles].map(t=><img key={`bundled/${t.source}/${t.key}`} src={t.url} alt="" draggable={false} style={{left:t.left,top:t.top,width:t.size+.5,height:t.size+.5}}/>)}{size.width>0&&tiles.map(t=><img className="online-tile" key={`${t.source}/${t.key}`} src={t.url} alt="" draggable={false} referrerPolicy="no-referrer"
         style={{left:t.left,top:t.top,width:t.size+.5,height:t.size+.5}}
         onLoad={e=>{e.currentTarget.style.visibility='visible';setCounts(c=>({...c,loaded:c.loaded+1}));}}
         onError={e=>{e.currentTarget.style.visibility='hidden';setCounts(c=>({...c,failed:c.failed+1}));}}/>)}</div>
@@ -64,8 +67,8 @@ export default function SatelliteMap(props:Props) {
       {planes.map(a=>{const [x,y]=point(a.lon,a.lat);if(x<-25||y<-25||x>size.width+25||y>size.height+25)return null;return <button key={a.id} className={`local-aircraft ${a.id===props.selected?.id?'selected':''} ${Date.now()-a.positionAt>90000?'stale':''}`} style={{left:x,top:y,color:a.id===props.selected?.id?'#ffc575':a.ground?'#b3c5cb':'#fff'}} aria-label={`Select ${a.displayFlight}`} title={`${a.displayFlight} · ${a.altitude===null?'Altitude unavailable':Math.round(a.altitude).toLocaleString()+' ft'}`} onPointerDown={e=>e.stopPropagation()} onClick={e=>{e.stopPropagation();props.onSelect(a.id);}}>
         <svg viewBox="0 0 64 64" width="30" height="30" style={{transform:`rotate(${a.heading??0}deg)`}} aria-hidden="true"><path d="M32 3 C35 3 36 12 36 22 L57 36 57 42 36 34 35 49 44 55 44 60 32 56 20 60 20 55 29 49 28 34 7 42 7 36 28 22 C28 12 29 3 32 3Z" fill="currentColor" stroke="#17313b" strokeWidth="2"/></svg>{a.id===props.selected?.id&&<span>{a.callsign}</span>}</button>;})}
     </div>
-    {counts.loaded===0&&!slow&&<div className="map-loading"><Globe2 size={35}/><strong>Loading satellite imagery</strong><span>Opening the map in 2D…</span></div>}
-    {slow&&counts.loaded===0&&<div className="local-map-message" role="status"><strong>Satellite imagery has not arrived.</strong><p>Keep this file open in Chrome with an internet connection. If you opened a preview, download the HTML and open it from Downloads.</p><small>{counts.failed?`${counts.failed} image requests failed.`:'Image requests are still pending.'} Flights connect separately.</small></div>}
+    {size.width===0&&<div className="map-loading"><Globe2 size={35}/><strong>Opening map</strong></div>}
+    {slow&&counts.loaded===0&&<div className="local-map-status" role="status">Using bundled imagery · online detail unavailable</div>}
     {uiError&&<div className="tile-error" role="status">{uiError}</div>}
     <div className="map-tools" aria-label="Map controls"><button aria-label="Zoom in" onClick={()=>zoom(1)}><Plus size={19}/></button><button aria-label="Zoom out" onClick={()=>zoom(-1)}><Minus size={19}/></button><span className="tool-divider"/><button aria-label="Find my location" onClick={props.onLocate}><LocateFixed size={19}/></button><span className="local-2d" title="Compatibility satellite map">2D</span><button aria-label="Toggle full screen" onClick={async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{setUIError('Full screen is unavailable here.');}}}><Maximize size={18}/></button></div>
     <div className="layers-anchor"><button className="layers-trigger" onClick={()=>setMode(v=>v==='satellite'?'earth':'satellite')} aria-label="Switch satellite and Earth imagery"><Layers3 size={17}/>{mode==='satellite'?'Satellite':'Earth'}<span className="shortcut">2D</span></button></div>

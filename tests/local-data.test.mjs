@@ -61,3 +61,20 @@ test('local fallback retains truthful source attribution', async () => {
   assert.equal(result.source,'ADSB.lol');
   assert.equal(result.aircraft[0].source,'ADSB.lol');
 });
+
+test('desktop edition sends only ADSB.lol queries through its same-origin launcher', async () => {
+  const calls=[];
+  const read=createLocalRequest({launcher:true, now:()=>instant, fetchImpl:async(url,options)=>{calls.push({url,options});return feed();}});
+  const result=await read('/api/aircraft?lat=40&lon=-75&radius=100');
+  assert.equal(result.source,'ADSB.lol');
+  assert.equal(calls.length,1);
+  assert.equal(calls[0].url,'/api/feed?path=%2Fv2%2Fpoint%2F40.00%2F-75.00%2F100');
+});
+
+test('desktop rate limit preserves the countdown without attempting a different route', async () => {
+  let calls=0;
+  const read=createLocalRequest({launcher:true, now:()=>instant, fetchImpl:async()=>{calls++;return new Response('{}',{status:429,headers:{'Retry-After':'120','Content-Type':'application/json'}});}});
+  await assert.rejects(read('/api/aircraft?lat=40&lon=-75&radius=100'), e=>e.retryAt===instant+120000);
+  await assert.rejects(read('/api/aircraft?lat=41&lon=-75&radius=100'));
+  assert.equal(calls,1);
+});

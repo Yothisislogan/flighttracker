@@ -4,7 +4,8 @@ import {createLocalRequest} from './data.mjs';
 import '../app/globals.css';
 import './style.css';
 
-const readLocal = createLocalRequest();
+const launcher = location.protocol === 'http:' && location.hostname === '127.0.0.1';
+const readLocal = createLocalRequest({launcher});
 async function request<T>(path:string, signal?:AbortSignal):Promise<T> {
   return await readLocal(path, signal) as T;
 }

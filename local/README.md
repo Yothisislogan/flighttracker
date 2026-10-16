@@ -5,9 +5,11 @@ Downloads, and open it in Chrome. On a Chromebook, use the Files app's **Open
 with Chrome** action if necessary. There is no Node installation, account,
 hosting service, web server, or command to run on the user's computer.
 
-The HTML bundles the interface, React, styles, airport directory,
-icons, and software licenses. Actual imagery and aircraft positions are
-requested over the internet. This is not an offline tracker.
+Local 3 bundles the interface, React, styles, airport directory, icons,
+licenses, a coarse global NASA map, and 42 regional USDA/USGS tiles around
+Philadelphia, New York and Washington. These images display without network
+requests. Online tiles add detail; bundled imagery blurs when zoomed in.
+Current aircraft positions always require an internet connection.
 
 The local edition displays satellite imagery using ordinary image tiles without
 WebGL, web workers, or external JavaScript. Aircraft search, filters, follow mode,
@@ -18,7 +20,26 @@ use browser storage when available; file storage can vary by browser or file
 location. Sharing copies the aircraft identifier, not a private file path.
 Airline schedules, gates and arrival estimates are not connected.
 
-## Live data and limits
+## Run the desktop package for live flights
+
+Extract `Skyline-Desktop.zip` and use the included launcher. Windows:
+`Start-Skyline.bat`; macOS: `Start-Skyline.command`; Linux: `python3 skyline.py`.
+Python 3.10+ is required, with no third-party Python packages. Chromebook users
+need the Linux development environment. Keep the launcher window open.
+
+The launcher serves only this app on an automatically chosen `127.0.0.1` port.
+It is not published online and requires no account or API key. It requests the
+documented ADSB.lol API using standard server HTTP, with bounded queries,
+20-second caching, request pacing, and provider cooldowns. Access denials are
+honored; redirects are rejected. The launcher does not contact adsb.fi.
+
+A direct request during implementation returned real ADSB.lol data but no
+`Access-Control-Allow-Origin` header for a local-file origin. Such a response
+cannot be read by JavaScript in a standalone HTML file. The launcher supplies
+a same-origin interface for this documented public API. This is the supported
+local option for automatic updates. Provider availability still varies.
+
+## Standalone HTML limits
 
 Only the documented public APIs from adsb.fi and ADSB.lol are contacted, using
 ordinary CORS requests without cookies, keys or an intermediary. The browser
@@ -43,11 +64,14 @@ has a lower resolution. Imagery is historical photography, not live video.
 
 ## Rebuild from source
 
-With the repository dependencies installed, run `pnpm build:local`.
+With repository dependencies and Python installed, run `pnpm build:local`.
+The first build downloads 58 imagery tiles using `scripts/cache-local-map.py`;
+subsequent builds reuse `local-map-cache/`. No flight data is bundled.
 Output: `local-dist/Skyline-Local.html`. The build uses the existing Vite
 dependency and explicitly skips hosting configuration and environment files.
 No server code, connector credentials, or runtime API secrets are required.
 
 Validation in the managed development environment covers the bundle,
-TypeScript, and the local request adapter. Actual local-file rendering and
+TypeScript, the local request adapter, and launcher HTTP/security behavior.
+Run launcher tests with `python3 -m unittest discover -s tests -p "*_test.py"`. Actual local-file rendering and
 live data access must be checked in the user's Chrome browser.
