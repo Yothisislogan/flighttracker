@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Skyline Flight Tracker",
+  "version": "1.0.0",
+  "description": "A local flight tracker with bundled photographic maps and public ADSB.lol positions. No account or hosting required.",
+  "minimum_chrome_version": "120",
+  "host_permissions": ["https://api.adsb.lol/*"],
+  "background": {"service_worker": "background.js"},
+  "action": {"default_title": "Open Skyline Flight Tracker"},
+  "options_page": "skyline.html",
+  "content_security_policy": {
+    "extension_pages": "default-src 'self'; script-src 'self'; object-src 'none'; connect-src https://api.adsb.lol; img-src 'self' data: https://gibs.earthdata.nasa.gov https://basemap.nationalmap.gov; style-src 'self' 'unsafe-inline'; font-src 'self' data:; base-uri 'none'; frame-src 'none'; form-action 'none'"
+  }
+}

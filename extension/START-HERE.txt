@@ -1,0 +1,63 @@
+SKYLINE FOR CHROME — LOCAL EDITION
+
+No account, API key, online hosting, Python, or Linux setup is needed.
+An internet connection is needed for current aircraft positions.
+
+ONE-TIME SETUP
+1. Extract Skyline-Chrome.zip to a folder you will keep on your computer.
+   On a Chromebook, open the ZIP in Files and copy the Skyline-Chrome folder
+   into Downloads. Select the copied folder, not the mounted ZIP.
+2. In Chrome's address bar, type chrome://extensions and press Enter.
+3. Turn on Developer mode at the top right of that page.
+   This is Chrome's extension setting, NOT Chromebook device Developer Mode.
+4. Click Load unpacked. Select the Skyline-Chrome folder that contains
+   manifest.json, then click Open/Select folder.
+5. Click Chrome's puzzle-piece Extensions button, then Skyline Flight Tracker.
+   You can pin it there for next time. It opens the tracker in a normal tab.
+
+Do not double-click skyline.html; that opens an ordinary file without the
+extension's permission to read the live API. Keep the extracted folder in place.
+If Load unpacked is disabled by your school or employer, this installation
+method is unavailable on that managed browser.
+
+WHAT TO EXPECT
+The map includes a coarse NASA global mosaic and regional USDA/USGS aerial
+imagery around Philadelphia, New York and Washington, so a map remains visible
+without downloads. Online images add detail. Bundled imagery blurs when zoomed
+in; coverage and resolution vary. These are real historical images, not live
+overhead photography or 3D terrain.
+
+Live positions come only from the public ADSB.lol API. Updates run every
+60 seconds while the tracker tab is visible. Provider availability, receiver
+coverage, and rate limits still apply. Errors remain visible; no simulated
+aircraft are substituted. Close extra tracker tabs to avoid duplicate polling.
+Airline schedules, gates and arrival predictions are not included.
+
+PERMISSIONS AND PRIVACY
+Chrome grants this extension network access only to https://api.adsb.lol/.
+It does not ask to read browsing history or change other websites. All program
+code and the base map are in this folder. Additional map images come from NASA
+and USGS. No accounts, cookies, analytics or private proxy services are used.
+Favorites are stored in this extension's local browser storage. Removing the
+extension clears that storage.
+
+IF THE FEED FAILS
+Check that you are online and that Skyline has access to api.adsb.lol in its
+Chrome extension Details page. A provider HTTP error or outage cannot be fixed
+by this permission. The app waits after rate limits or access denials. Copy
+the displayed error if it continues. Do not disable Chrome's browser security.
+
+VERIFICATION
+The package was built and its data adapter, permission boundaries, error
+handling and bundled assets were checked automatically. It has not been
+installed in a real Chrome session in the build environment. This is not a
+claim of end-to-end verification on your device.
+
+SOURCE AND CREDITS
+https://github.com/Yothisislogan/flighttracker
+App: Mozilla Public License 2.0; see LICENSE.
+Dependency notices: licenses.txt.
+Flight positions: ADSB.lol, https://www.adsb.lol/ — ODbL 1.0.
+Imagery: NASA GIBS and USDA / USGS; attribution is also on the map.
+Independent project, not affiliated with FlightAware. For flight exploration,
+not navigation.

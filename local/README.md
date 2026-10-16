@@ -20,6 +20,13 @@ use browser storage when available; file storage can vary by browser or file
 location. Sharing copies the aircraft identifier, not a private file path.
 Airline schedules, gates and arrival estimates are not connected.
 
+## Chrome option without a local server
+
+See the [Chrome extension installation guide](../extension/START-HERE.txt).
+It uses the same map and interface, plus Chrome host permission for the public
+ADSB.lol API. It requires loading an unpacked extension once, but no account,
+Python, or Linux environment. Build it with `pnpm build:extension`.
+
 ## Run the desktop package for live flights
 
 Extract `Skyline-Desktop.zip` and use the included launcher. Windows:
@@ -36,7 +43,7 @@ honored; redirects are rejected. The launcher does not contact adsb.fi.
 A direct request during implementation returned real ADSB.lol data but no
 `Access-Control-Allow-Origin` header for a local-file origin. Such a response
 cannot be read by JavaScript in a standalone HTML file. The launcher supplies
-a same-origin interface for this documented public API. This is the supported
+a same-origin interface for this documented public API. This is one
 local option for automatic updates. Provider availability still varies.
 
 ## Standalone HTML limits

@@ -4,14 +4,28 @@ A map-first personal flight tracker with real satellite/aerial imagery, 3D terra
 
 ## Run without hosting
 
-The [local edition](local/README.md) packages the app as one downloadable
-`Skyline-Local.html` file that opens directly in Chrome. No account, installation,
-or local server is required to display the bundled map. Automatic live tracking
-uses the included local launcher (Python 3.10+) because the available public
-feed does not consistently permit direct browser requests. This runs only on
-your computer, with no online hosting. Live data still needs internet access
-and provider permission. Build it with `pnpm build:local`; the generated file is in
-`local-dist/`. This separate build does not deploy or change the hosted Site.
+The [Chrome extension](extension/START-HERE.txt) packages the app, styles and
+base maps in one local folder. Extract `Skyline-Chrome.zip`, visit
+`chrome://extensions`, enable the extension page's **Developer mode**, and
+choose **Load unpacked**. Select the `Skyline-Chrome` folder, then open Skyline
+from Chrome's Extensions menu. No account, Python, Linux environment, or web
+server is needed. This is a Chrome extension, not a double-click HTML file.
+
+The extension requests host access only to the documented public ADSB.lol API.
+Chrome supports cross-origin requests from extension pages with that permission;
+ordinary HTML cannot grant itself the same access. Provider availability and
+access rules still apply. Updates run every 60 seconds while the app is visible.
+No background feed polling or content scripts are installed. Automatic data and
+package checks pass; real Chrome installation and rendering still need device
+verification. See [Chrome's network request documentation](https://developer.chrome.com/docs/extensions/develop/concepts/network-requests).
+
+Build with `pnpm build:extension`; the ready-to-load folder is
+`local-dist/Skyline-Chrome/`. This build does not deploy or change the hosted Site.
+The [single-file HTML and optional Python launcher](local/README.md) remain
+available. The plain HTML includes its map but has not been verified to read a
+live feed in the user's browser. The PocketWorld connection check failed from
+both an HTTPS preview and a downloaded `file:` page on 2026-10-16; no working
+PocketWorld integration is claimed.
 
 ## What works now
 
