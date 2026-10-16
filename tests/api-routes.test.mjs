@@ -10,11 +10,11 @@ async function moduleFrom(path,replacements={}) {
  const url='data:text/javascript;base64,'+Buffer.from(js+'\n// instance '+(++serial)).toString('base64');
  return {url,module:await import(url)};
 }
-async function aircraftAPI(){const {url}=await moduleFrom('../lib/providers.ts',{'./flight-data.mjs':new URL('../lib/flight-data.mjs',import.meta.url).href});return (await moduleFrom('../app/api/aircraft/route.ts',{'@/lib/flight-data.mjs':new URL('../lib/flight-data.mjs',import.meta.url).href,'@/lib/providers':url})).module;}
+async function aircraftAPI(){const {url}=await moduleFrom('../lib/providers.ts',{'./aircraft-provider.mjs':new URL('../lib/aircraft-provider.mjs',import.meta.url).href});return (await moduleFrom('../app/api/aircraft/route.ts',{'@/lib/flight-data.mjs':new URL('../lib/flight-data.mjs',import.meta.url).href,'@/lib/providers':url,'@/lib/aircraft-provider.mjs':new URL('../lib/aircraft-provider.mjs',import.meta.url).href})).module;}
 const raw={hex:'abc123',flight:'AAL123',lat:40,lon:-75,seen_pos:0,alt_baro:10000,gs:250};
 test('API validates before fetching and coalesces/cache identical live requests',async()=>{
  const old=globalThis.fetch;let calls=0;
- try{globalThis.fetch=async(url)=>{calls++;assert.ok(String(url).startsWith('https://api.adsb.lol/v2/point/'));return Response.json({now:Date.now(),ac:[raw]});};
+ try{globalThis.fetch=async(url)=>{calls++;assert.ok(String(url).startsWith('https://opendata.adsb.fi/api/v3/lat/'));return Response.json({now:Date.now(),ac:[raw]});};
  const api=await aircraftAPI();assert.equal((await api.GET(new Request('https://app/api/aircraft?lat=95&lon=0'))).status,400);assert.equal(calls,0);
  const req=()=>new Request('https://app/api/aircraft?lat=40&lon=-75&radius=150');
  const responses=await Promise.all([api.GET(req()),api.GET(req())]);assert.equal(calls,1);assert.equal((await responses[0].json()).aircraft.length,1);assert.equal((await api.GET(req())).status,200);assert.equal(calls,1);
@@ -23,8 +23,8 @@ test('API validates before fetching and coalesces/cache identical live requests'
 test('API reports stale upstream failures and backs off after rate limits',async()=>{
  const old=globalThis.fetch;let calls=0;
  try{globalThis.fetch=async()=>{calls++;return new Response('',{status:429});};const api=await aircraftAPI();const req=()=>new Request('https://app/api/aircraft?lat=40&lon=-75');
- assert.equal((await api.GET(req())).status,503);assert.equal((await api.GET(req())).status,503);assert.equal(calls,1);
- globalThis.fetch=async()=>Response.json({now:Date.now()-300000,ac:[raw]});const freshAPI=await aircraftAPI();const r=await freshAPI.GET(req());assert.equal(r.status,503);assert.match((await r.json()).error,/stale/);
+ assert.equal((await api.GET(req())).status,503);assert.equal((await api.GET(req())).status,503);assert.equal(calls,2);
+ globalThis.fetch=async()=>Response.json({now:Date.now()-300000,ac:[raw]});const freshAPI=await aircraftAPI();const r=await freshAPI.GET(req());assert.equal(r.status,503);assert.equal((await r.json()).code,'FEED_UNAVAILABLE');
  }finally{globalThis.fetch=old;}
 });
 test('paid airline endpoint is disabled by default and exposes no secret',async()=>{
