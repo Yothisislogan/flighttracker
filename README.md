@@ -2,6 +2,14 @@
 
 A map-first personal flight tracker with real satellite/aerial imagery, 3D terrain, live ADS-B aircraft positions, airport search, local favorites, and optional FlightAware airline details.
 
+## Run without hosting
+
+The [local edition](local/README.md) packages the app as one downloadable
+`Skyline-Local.html` file that opens directly in Chrome. No account, installation,
+or local server is required. Maps and live data still need internet access and
+provider permission. Build it with `pnpm build:local`; the generated file is in
+`local-dist/`. This separate build does not deploy or change the hosted Site.
+
 ## What works now
 
 - Actual USDA/USGS imagery over the contiguous U.S.; NASA Blue Marble global satellite mosaic elsewhere. This is historical imagery, not a live overhead camera.

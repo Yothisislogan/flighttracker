@@ -1,0 +1,50 @@
+import {build} from 'vite';
+import {readFile, writeFile, mkdir} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+import {dirname, resolve} from 'node:path';
+import {createRequire} from 'node:module';
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const require = createRequire(import.meta.url);
+// Isolated from Sites/Vinext configuration: this build has no server or login.
+const result = await build({
+  configFile: false, root, publicDir: false, envFile: false,
+  resolve: {alias: {'@': root}},
+  define: {'process.env.NODE_ENV': JSON.stringify('production')},
+  build: {
+    write: false, target: 'chrome120', minify: true, cssCodeSplit: false,
+    license: {fileName: 'licenses.txt'},
+    lib: {entry: resolve(root, 'local/main.tsx'), name: 'SkylineLocal', formats: ['iife']},
+    rolldownOptions: {output: {codeSplitting: false}},
+  },
+});
+const outputs = (Array.isArray(result) ? result : [result]).flatMap(r => r.output);
+const chunks = outputs.filter(o => o.type === 'chunk');
+const assets = outputs.filter(o => o.type === 'asset');
+if (chunks.length !== 1 || chunks[0].imports.length || chunks[0].dynamicImports.some(name => name !== chunks[0].fileName) || assets.some(o => !o.fileName.endsWith('.css') && o.fileName !== 'licenses.txt')) {
+  throw new Error('Unexpected local output: '+JSON.stringify(outputs.map(o=>({type:o.type,fileName:o.fileName,imports:o.imports,dynamicImports:o.dynamicImports}))));
+}
+const script = chunks[0].code.replace(/<\/script/gi, '<\\/script');
+const css = assets.filter(o => o.fileName.endsWith('.css')).map(o => String(o.source)).join('\n').replace(/<\/style/gi, '<\\/style');
+const escape = s => s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+// Preserve distribution licenses alongside bundled dependencies, inside the file.
+const notices = [await readFile(resolve(root, 'LICENSE'), 'utf8'), ...assets.filter(o => o.fileName === 'licenses.txt').map(o => String(o.source))];
+for (const [pkg, filename] of [['react','LICENSE'], ['react-dom','LICENSE'], ['maplibre-gl','LICENSE.txt'], ['lucide-react','LICENSE'], ['tailwindcss','LICENSE']]) {
+  const folder = dirname(require.resolve(pkg + '/package.json'));
+  notices.push(pkg + '\n' + await readFile(resolve(folder, filename), 'utf8'));
+}
+const icon = await readFile(resolve(root, 'public/favicon.svg'));
+const html = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer"><title>Skyline — Local Flight Tracker</title>
+<link rel="icon" href="data:image/svg+xml;base64,${icon.toString('base64')}">
+<style>${css}</style></head><body>
+<div id="root"><p style="color:white;padding:32px;font:16px system-ui">Opening Skyline… Download this file and open it in Chrome if your preview does not run apps.</p></div>
+<noscript>Skyline needs JavaScript enabled in your browser.</noscript>
+<script>${script}</script>
+<template id="software-licenses"><pre>${escape(notices.join('\n\n'))}</pre></template>
+</body></html>`;
+const directory = resolve(root, 'local-dist');
+await mkdir(directory, {recursive:true});
+await writeFile(resolve(directory, 'Skyline-Local.html'), html);
+console.log(`Local app: ${resolve(directory, 'Skyline-Local.html')} (${Buffer.byteLength(html).toLocaleString()} bytes)`);
