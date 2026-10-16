@@ -5,7 +5,7 @@ import {Plus,Minus,Compass,LocateFixed,Layers3,Maximize,Minimize,Mountain,Map as
 import {airports} from '@/lib/airports';
 import type {Aircraft,Region} from '@/lib/types';
 export type Camera={lon:number;lat:number;zoom:number;nonce:number};
-type Props={aircraft:Aircraft[];selected:Aircraft|null;onSelect:(id:string)=>void;onArea:(r:Region)=>void;camera:Camera;following:boolean;onStopFollow:()=>void;trail:[number,number][];mapKey:string|null;showAirports:boolean;onLocate:()=>void};
+export type Props={aircraft:Aircraft[];selected:Aircraft|null;onSelect:(id:string)=>void;onArea:(r:Region)=>void;camera:Camera;following:boolean;onStopFollow:()=>void;trail:[number,number][];mapKey:string|null;showAirports:boolean;onLocate:()=>void};
 const empty={type:'FeatureCollection' as const,features:[]};
 function style(key:string|null):StyleSpecification {
   return {version:8,sources:{

@@ -9,7 +9,7 @@ const require = createRequire(import.meta.url);
 // Isolated from Sites/Vinext configuration: this build has no server or login.
 const result = await build({
   configFile: false, root, publicDir: false, envFile: false,
-  resolve: {alias: {'@': root}},
+  resolve: {alias: {'@': root, './FlightMap': resolve(root, 'local/SatelliteMap.tsx')}},
   define: {'process.env.NODE_ENV': JSON.stringify('production')},
   build: {
     write: false, target: 'chrome120', minify: true, cssCodeSplit: false,
@@ -41,6 +41,7 @@ const html = `<!doctype html>
 <style>${css}</style></head><body>
 <div id="root"><p style="color:white;padding:32px;font:16px system-ui">Opening Skyline… Download this file and open it in Chrome if your preview does not run apps.</p></div>
 <noscript>Skyline needs JavaScript enabled in your browser.</noscript>
+<script>window.addEventListener('error',function(event){if(!event.message)return;var panel=document.getElementById('startup-error');if(!panel){panel=document.createElement('div');panel.id='startup-error';panel.style.cssText='position:fixed;bottom:16px;left:16px;right:16px;z-index:9999;background:#fff3e4;color:#542c10;border:1px solid #e1bb89;border-radius:10px;padding:18px;font:14px system-ui';document.body.appendChild(panel);}panel.textContent='Skyline could not finish starting: '+event.message+'. Please copy this message so the error can be fixed.';});</script>
 <script>${script}</script>
 <template id="software-licenses"><pre>${escape(notices.join('\n\n'))}</pre></template>
 </body></html>`;

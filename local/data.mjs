@@ -4,8 +4,9 @@ import {validateAircraftParams} from '../lib/flight-data.mjs';
 // Direct, credential-free browser requests to documented public APIs only.
 // No proxy, backend, scraped endpoints, or browser security changes are used.
 export function createLocalRequest({fetchImpl = (...args) => fetch(...args), now = () => Date.now(), wait} = {}) {
+  const failures = new Map();
   const readFeed = createAircraftFeed({
-    now, ...(wait ? {wait} : {}), onFailure: () => {},
+    now, ...(wait ? {wait} : {}), onFailure: event => failures.set(event.provider, event),
     fetchImpl: (url, options) => fetchImpl(url, {
       ...options, headers: {Accept: 'application/json'},
       credentials: 'omit', mode: 'cors', redirect: 'error', referrerPolicy: 'no-referrer',
@@ -25,7 +26,8 @@ export function createLocalRequest({fetchImpl = (...args) => fetch(...args), now
     } catch (cause) {
       if (signal?.aborted) throw cause;
       if (!(cause instanceof FeedUnavailableError)) throw cause;
-      const error = new Error('The public flight feed could not be read. Check your internet connection. The provider may be unavailable, limiting requests, or not allowing access from this browser.');
+      const status = [...failures.values()].map(e => `${e.provider}: ${e.status === 429 ? 'rate limited (429)' : e.status === 401 || e.status === 403 ? `access denied (${e.status})` : e.reason === 'timeout' ? 'request timed out' : e.status === 200 ? 'unreadable or stale response' : e.status ? `HTTP ${e.status}` : 'connection failed (network or browser restriction)'}`).join('; ');
+      const error = new Error(`The public flight feed could not be read. ${status}. Open the downloaded HTML in Chrome with internet access. Provider access and browser permissions still apply.`);
       error.retryAt = now() + cause.retryAfterSeconds * 1000;
       throw error;
     }

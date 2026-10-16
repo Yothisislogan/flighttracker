@@ -1,7 +1,6 @@
 import {createRoot} from 'react-dom/client';
 import Tracker from '../components/Tracker';
 import {createLocalRequest} from './data.mjs';
-import 'maplibre-gl/dist/maplibre-gl.css';
 import '../app/globals.css';
 import './style.css';
 

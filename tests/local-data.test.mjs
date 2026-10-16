@@ -38,6 +38,8 @@ test('HTML and browser-denied requests produce readable errors and respect coold
   }});
   await assert.rejects(read('/api/aircraft?lat=40&lon=-75&radius=100'), e => {
     assert.match(e.message,/public flight feed could not be read/);
+    assert.match(e.message,/adsb.fi: rate limited \(429\)/);
+    assert.match(e.message,/ADSB.lol: connection failed/);
     assert.doesNotMatch(e.message,/Unexpected token|DOCTYPE/);
     assert.equal(e.retryAt, instant+60000);
     return true;
